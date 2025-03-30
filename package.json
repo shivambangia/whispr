@@ -1,0 +1,29 @@
+{
+  "name": "whispr",
+  "version": "1.0.0",
+  "description": "A Chrome extension that converts your speech to text using the Web Speech API and processes it with LangChain.",
+  "main": "popup/popup.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack --config webpack.config.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "assert": "^2.1.0",
+    "browserify-zlib": "^0.2.0",
+    "crypto-browserify": "^3.12.1",
+    "https-browserify": "^1.0.0",
+    "path-browserify": "^1.0.1",
+    "stream-browserify": "^3.0.0",
+    "stream-http": "^3.2.0",
+    "url": "^0.11.4",
+    "util": "^0.12.5",
+    "webpack": "^5.98.0",
+    "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "@langchain/core": "^0.3.43"
+  }
+}

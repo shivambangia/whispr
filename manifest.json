@@ -1,36 +1,25 @@
 {
   "manifest_version": 3,
-  "name": "Speech to Text Extension",
+  "name": "Speech to Action Agent",
   "version": "1.0",
-  "description": "A Chrome extension that converts speech to text",
+  "description": "Uses speech recognition and LangChain to perform browser actions.",
   "permissions": [
     "activeTab",
-    "scripting"
+    "tabs",
+    "bookmarks",
+    "storage"
   ],
   "action": {
-    "default_popup": "popup.html",
+    "default_popup": "popup/popup.html",
+    "default_title": "Speech Agent",
     "default_icon": {
       "16": "images/icon16.png",
       "48": "images/icon48.png",
       "128": "images/icon128.png"
     }
   },
-  "content_scripts": [
-    {
-      "matches": ["<all_urls>"],
-      "js": ["content_scripts/speech-recognition.js"]
-    }
-  ],
   "background": {
-    "service_worker": "background_scripts/background.js"
-  },
-  "icons": {
-    "16": "images/icon16.png",
-    "48": "images/icon48.png",
-    "128": "images/icon128.png"
-  },
-  "web_accessible_resources": [{
-    "resources": ["css/*", "content_scripts/*"],
-    "matches": ["<all_urls>"]
-  }]
-} 
+    "service_worker": "background/background.js",
+    "type":"module"
+   }
+}
