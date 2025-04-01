@@ -49,7 +49,7 @@ const agentRunnable = await createOpenAIFunctionsAgent({
 
 // Node that runs the agent logic
 const runAgentNode = async (state) => {
-    console.log("Graph: Running Agent Node");
+    console.log("Graph: Running Agent Node with input:", state.input);
     const agentOutcome = await agentRunnable.invoke({
         input: state.input,
         intermediate_steps: state.intermediate_steps,

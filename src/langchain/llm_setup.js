@@ -5,7 +5,7 @@
 // Option 3 (Backend): Have the extension communicate with your own secure backend that holds the key.
 
 // For this example, we'll use a placeholder. Replace with your actual setup.
-const YOUR_API_KEY = ""; // <-- !!! REPLACE OR USE STORAGE !!!
+const YOUR_API_KEY = "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"; // <-- !!! REPLACE OR USE STORAGE !!!
 
 // Ensure you have installed the necessary package: npm install @langchain/openai
 import { ChatOpenAI } from "@langchain/openai";

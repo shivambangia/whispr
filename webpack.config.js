@@ -1,11 +1,15 @@
 // webpack.config.js
 const path = require('path');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
   mode: 'development',
-  entry: './popup/popup.js',
+  entry: {
+    background: './src/background.js', // Entry point for background script
+    popup: './src/popup.js',           // Entry point for popup script
+  },
   output: {
-    filename: 'bundle.js',
+    filename: '[name].bundle.js', // Use [name] to create separate bundles for each entry
     path: path.resolve(__dirname, 'dist'),
   },
   resolve: {
@@ -23,5 +27,12 @@ module.exports = {
     },
     extensions: ['.js'],
   },
+  plugins: [
+    new CopyWebpackPlugin({
+      patterns: [
+        { from: path.resolve(__dirname, 'static'), to: path.resolve(__dirname, 'dist') }, // Copy static files
+      ],
+    }),
+  ],
   // ... other config (module, devtool) ...
 };

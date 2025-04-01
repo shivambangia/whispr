@@ -9,17 +9,17 @@
     "bookmarks",
     "storage"
   ],
+  "icons": {
+      "16": "assets/images/icon16.png",
+      "48": "assets/images/icon48.png",
+      "128": "assets/images/icon128.png"
+    },
   "action": {
-    "default_popup": "popup/popup.html",
-    "default_title": "Speech Agent",
-    "default_icon": {
-      "16": "images/icon16.png",
-      "48": "images/icon48.png",
-      "128": "images/icon128.png"
-    }
+    "default_popup": "popup.html",
+    "default_title": "Speech Agent"
   },
   "background": {
-    "service_worker": "background/background.js",
-    "type":"module"
-   }
-}
+    "service_worker": "background.bundle.js", 
+    "type": "module"
+  }
+} 
