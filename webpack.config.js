@@ -1,38 +1,57 @@
-// webpack.config.js
 const path = require('path');
+const webpack = require('webpack');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
-  mode: 'development',
+  mode: 'development', // Change to 'production' as needed
+  devtool: 'source-map',
   entry: {
-    background: './src/background.js', // Entry point for background script
-    popup: './src/popup.js',           // Entry point for popup script
+    background: path.resolve(__dirname, 'src/background.js'),
+    popup: path.resolve(__dirname, 'static/popup.js')
   },
   output: {
-    filename: '[name].bundle.js', // Use [name] to create separate bundles for each entry
-    path: path.resolve(__dirname, 'dist'),
+    filename: '[name].bundle.js',
+    path: path.resolve(__dirname, 'dist')
   },
   resolve: {
     fallback: {
-      "path": require.resolve("path-browserify"),
-      "crypto": require.resolve("crypto-browserify"),
-      "stream": require.resolve("stream-browserify"),
-      "http": require.resolve("stream-http"),
-      "https": require.resolve("https-browserify"),
-      "zlib": require.resolve("browserify-zlib"),
-      "url": require.resolve("url/"),
-      "assert": require.resolve("assert/"),
-      "util": require.resolve("util/"),
-      "async_hooks": false,
+      "process/browser": require.resolve("process/browser")
     },
-    extensions: ['.js'],
+    alias: {
+      // Also alias non-prefixed "async_hooks" to our polyfill
+      "async_hooks": path.resolve(__dirname, 'empty.js')
+    }
+  },
+  module: {
+    rules: [
+      {
+        test: /\.mjs$/,
+        include: /node_modules/,
+        type: 'javascript/auto',
+        resolve: {
+          fullySpecified: false,
+        }
+      }
+    ]
   },
   plugins: [
+    // Replace any import of "node:async_hooks" with our polyfill from empty.js
+    new webpack.NormalModuleReplacementPlugin(/^node:async_hooks$/, resource => {
+      resource.request = path.resolve(__dirname, 'empty.js');
+    }),
+    new webpack.ProvidePlugin({
+      process: 'process/browser'
+    }),
     new CopyWebpackPlugin({
       patterns: [
-        { from: path.resolve(__dirname, 'static'), to: path.resolve(__dirname, 'dist') }, // Copy static files
-      ],
-    }),
-  ],
-  // ... other config (module, devtool) ...
+        {
+          from: path.resolve(__dirname, 'static'),
+          to: path.resolve(__dirname, 'dist'),
+          globOptions: {
+            ignore: ['popup.js']
+          }
+        }
+      ]
+    })
+  ]
 };

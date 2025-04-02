@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Speech to Action Agent",
+  "name": "Whispr",
   "version": "1.0",
   "description": "Uses speech recognition and LangChain to perform browser actions.",
   "permissions": [
@@ -10,13 +10,12 @@
     "storage"
   ],
   "icons": {
-      "16": "assets/images/icon16.png",
-      "48": "assets/images/icon48.png",
-      "128": "assets/images/icon128.png"
+      "16": "assets/icon16.png",
+      "48": "assets/icon48.png",
+      "128": "assets/icon128.png"
     },
   "action": {
-    "default_popup": "popup.html",
-    "default_title": "Speech Agent"
+    "default_popup": "popup.html"
   },
   "background": {
     "service_worker": "background.bundle.js", 

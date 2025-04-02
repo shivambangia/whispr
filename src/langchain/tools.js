@@ -15,7 +15,6 @@ import { ToolNode } from "@langchain/langgraph/prebuilt"; // Prebuilt node for e
 
 // Internal imports
 import { getLLM } from './llm_setup.js';
-import { availableTools } from './tools.js'; // Import the tool instances
 
 // --- 1. Define Agent State ---
 // Represents the information flowing through the graph
@@ -123,3 +122,39 @@ export function formatFinalResponse(finalState) {
     }
     return "Processing complete, but no specific response generated."; // Default fallback
 }
+
+export const availableTools = {
+    bookmarkCurrentTab: {
+      name: "bookmarkCurrentTab",
+      description: "Bookmarks the current active tab in the browser.",
+      async execute(params = {}) {
+        return new Promise((resolve, reject) => {
+          // Query the currently active tab in the current window
+          chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            if (tabs && tabs.length > 0) {
+              const currentTab = tabs[0];
+              // Create a new bookmark with the tab's title and URL
+              chrome.bookmarks.create(
+                {
+                  title: currentTab.title,
+                  url: currentTab.url,
+                },
+                (bookmark) => {
+                  if (chrome.runtime.lastError) {
+                    reject(chrome.runtime.lastError);
+                  } else {
+                    resolve(
+                      `Bookmark created: ${bookmark.title} (ID: ${bookmark.id})`
+                    );
+                  }
+                }
+              );
+            } else {
+              reject("No active tab found.");
+            }
+          });
+        });
+      },
+    },
+    // You can add more tools here...
+  };
