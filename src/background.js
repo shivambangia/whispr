@@ -13,17 +13,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             chrome.tabs.sendMessage(sender.tab.id, { type: "STATUS_UPDATE", payload: "Analyzing request..." });
          }
 
+         const initialState = {
+            input: transcript,
+            intermediate_steps: [], // Start with no history/steps
+            chat_history: [], // Initialize if using history
+        };
 
         // Use an async IIFE (Immediately Invoked Function Expression) to handle the async agent logic
         (async () => {
             try {
                 // Prepare the initial state for the graph
-                const initialState = {
-                    input: transcript,
-                    intermediate_steps: [], // Start with no history/steps
-                    // chat_history: [], // Initialize if using history
-                };
-
                 console.log("Background: Invoking LangGraph agent...");
                 // Stream events (optional, good for debugging)
                 // const stream = await agentGraph.stream(initialState);
@@ -32,22 +31,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 //       // You could potentially send finer-grained status updates here
                 // }
                 // OR just invoke and wait for the final state
-                const finalState = await agentGraph.invoke(initialState);
+                    const finalState = await agentGraph.invoke(initialState);
 
                 console.log("Background: LangGraph execution finished. Final State:", finalState);
-
-                // Format a user-friendly response based on the final state
-                const responseMessage = formatFinalResponse(finalState); // Use the helper
-
-                console.log("Background: Sending response:", responseMessage);
-                sendResponse({ success: true, message: responseMessage });
 
                  // Send final status update back to the specific popup tab that sent the message
                  if (sender.tab?.id) {
                      chrome.tabs.sendMessage(sender.tab.id, { type: "STATUS_UPDATE", payload: responseMessage });
                  }
-
-
             } catch (error) {
                 console.error("Background: Error processing transcript with LangGraph:", error);
                 // Send an error response back to the popup
@@ -68,9 +59,3 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // return false; // if not handling the message or responding synchronously
 });
 
-// Optional: Log when the extension is installed or updated
-chrome.runtime.onInstalled.addListener(() => {
-    console.log("Speech to Action Agent extension installed/updated.");
-    // You could potentially set default storage values here (e.g., for API keys)
-    // chrome.storage.sync.set({ someDefaultSetting: true });
-});

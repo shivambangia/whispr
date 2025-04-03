@@ -22,6 +22,7 @@ module.exports = {
       "async_hooks": path.resolve(__dirname, 'empty.js')
     }
   },
+  target: "webworker",
   module: {
     rules: [
       {
