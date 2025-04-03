@@ -1,12 +1,10 @@
-// agentgraph.js
-
+// agent_graph.js
 import { getLLM } from "./llm_setup.js";
-import { availableTools } from "./tools.js";
+import { bookmarkTool } from "./tools.js";
 
-// Convert the object of tools to an array if needed.
-const toolsArray = Object.values(availableTools);
+// For simplicity, we’ll use a single tool in our tools array.
+const toolsArray = [bookmarkTool];
 
-// Define the system message identical to background.js.
 const systemMessage = {
   role: "system",
   content:
@@ -15,13 +13,14 @@ const systemMessage = {
 
 export const agentGraph = {
   /**
-   * Invokes the LLM with the system message and the human message (initial input).
+   * Invokes the agent by calling the LLM with the system message and the user input.
+   * The LLM is bound to the available tools so that if a tool call is needed (e.g., to bookmark),
+   * the function is automatically used.
    *
-   * @param {Object} initialState - Contains the input, intermediate_steps, and chat_history.
-   * @returns {Promise<Object>} The final state with the LLM result appended.
+   * @param {Object} initialState - Contains at least an `input` property.
+   * @returns {Promise<Object>} The final state with the LLM result.
    */
   async invoke(initialState) {
-    // Construct messages array using the system message and the user's input.
     const messages = [
       systemMessage,
       {
@@ -30,21 +29,16 @@ export const agentGraph = {
       },
     ];
 
-    // Get the LLM instance and bind tools.
+    // Get the LLM instance.
     const llm = getLLM();
+    // Bind the available tools (our bookmark tool) to the LLM.
     const llmWithTools = llm.bindTools(toolsArray);
-
-    // Call the LLM with the prepared messages.
+    // Invoke the LLM with the messages.
     const result = await llmWithTools.invoke(messages);
 
-    // Return an updated state containing the LLM result.
     return {
       ...initialState,
       result,
-      intermediate_steps: [
-        ...initialState.intermediate_steps,
-        "LLM invoked and response obtained.",
-      ],
     };
   },
 };

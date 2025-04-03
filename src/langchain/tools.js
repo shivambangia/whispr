@@ -1,47 +1,38 @@
 // tools.js
+import { tool } from '@langchain/core/tools';
+import { z } from 'zod';
 
-// Define the actual function separately.
-async function bookmarkCurrentTabFunction(params = {}) {
-  return new Promise((resolve, reject) => {
-    // Query the currently active tab in the current window.
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      if (tabs && tabs.length > 0) {
-        const currentTab = tabs[0];
-        // Create a new bookmark with the tab's title and URL.
-        chrome.bookmarks.create(
-          {
-            title: currentTab.title,
-            url: currentTab.url,
-          },
-          (bookmark) => {
-            if (chrome.runtime.lastError) {
-              reject(chrome.runtime.lastError);
-            } else {
-              resolve(
-                `Bookmark created: ${bookmark.title} (ID: ${bookmark.id})`
-              );
+export const bookmarkTool = tool(
+  async () => {
+    return new Promise((resolve, reject) => {
+      // Query the currently active tab in the current window.
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs && tabs.length > 0) {
+          const currentTab = tabs[0];
+          // Create a new bookmark using Chrome's bookmarks API.
+          chrome.bookmarks.create(
+            {
+              title: currentTab.title,
+              url: currentTab.url,
+            },
+            (bookmark) => {
+              if (chrome.runtime.lastError) {
+                reject(chrome.runtime.lastError);
+              } else {
+                resolve(`Bookmark created: ${bookmark.title} (ID: ${bookmark.id})`);
+              }
             }
-          }
-        );
-      } else {
-        reject("No active tab found.");
-      }
+          );
+        } else {
+          reject("No active tab found.");
+        }
+      });
     });
-  });
-}
-
-export const availableTools = {
-  bookmarkCurrentTab: {
-    name: "bookmarkCurrentTab",
-    type: "function",
-    description: "Bookmarks the current active tab in the browser.",
-    parameters: {
-      type: "object",
-      properties: {},
-      required: [],
-    },
-    // Explicitly assign the function using the key "function"
-    function: bookmarkCurrentTabFunction,
   },
-  // Additional tools can be added here...
-};
+  {
+    name: "bookmarkTool",
+    description: "Bookmarks the active page using the Chrome API.",
+    // No parameters are required.
+    schema: z.object({}),
+  }
+);
