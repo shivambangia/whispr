@@ -1,44 +1,60 @@
-// agent_graph.js
-import { getLLM } from "./llm_setup.js";
-import { bookmarkTool } from "./tools.js";
+import { END, START, StateGraph, Annotation } from "@langchain/langgraph/web";
+import { HumanMessage } from "@langchain/core/messages";
+import { RunnableLambda } from "@langchain/core/runnables";
 
-// For simplicity, we’ll use a single tool in our tools array.
-const toolsArray = [bookmarkTool];
+// Define the root state with a messages array and a reducer to concatenate messages.
+const GraphState3 = Annotation.Root({
+  messages: Annotation({
+    reducer: (x, y) => x.concat(y),
+  }),
+});
 
-const systemMessage = {
-  role: "system",
-  content:
-    "You are a helpful assistant interacting with browser tools based on user speech. Use the provided tools when appropriate. Respond concisely.",
+// Define the node function. This function uses a nested function to produce a response.
+const nodeFn3 = async (_state, config) => {
+  // Create the nested function which returns a HumanMessage.
+  const nestedFn = RunnableLambda.from(
+    async (input, _config) => {
+      return new HumanMessage(`Hello from ${input}!`);
+    }
+  ).withConfig({ runName: "nested" });
+
+  // Invoke the nested function.
+  const responseMessage = await nestedFn.invoke("a nested function", config);
+  return { messages: [responseMessage] };
 };
 
-export const agentGraph = {
-  /**
-   * Invokes the agent by calling the LLM with the system message and the user input.
-   * The LLM is bound to the available tools so that if a tool call is needed (e.g., to bookmark),
-   * the function is automatically used.
-   *
-   * @param {Object} initialState - Contains at least an `input` property.
-   * @returns {Promise<Object>} The final state with the LLM result.
-   */
-  async invoke(initialState) {
-    const messages = [
-      systemMessage,
-      {
-        role: "human",
-        content: initialState.input,
-      },
-    ];
+// Build the state graph with a single node.
+const workflow3 = new StateGraph(GraphState3)
+  .addNode("node", nodeFn3)
+  .addEdge(START, "node")
+  .addEdge("node", END);
 
-    // Get the LLM instance.
-    const llm = getLLM();
-    // Bind the available tools (our bookmark tool) to the LLM.
-    const llmWithTools = llm.bindTools(toolsArray);
-    // Invoke the LLM with the messages.
-    const result = await llmWithTools.invoke(messages);
+// Compile the graph to create an executable application.
+const app3 = workflow3.compile({});
 
-    return {
-      ...initialState,
-      result,
-    };
-  },
-};
+/**
+ * Runs the langgraph workflow with an initial transcript.
+ * 
+ * @param {Array} initialTranscript - An array of messages that form the initial transcript.
+ * @returns {Promise<Array>} - Resolves to an array of stream events.
+ */
+export async function runWithTranscript(initialTranscript) {
+  // Initialize state with the provided transcript.
+  const initialState = { messages: initialTranscript };
+
+  // Stream events from the workflow.
+  const eventStream = app3.streamEvents(
+    initialState,
+    { version: "v2" },
+    { includeNames: ["nested"] }
+  );
+
+  const events = [];
+  for await (const event of eventStream) {
+    console.log(event);
+    events.push(event);
+  }
+
+  console.log(`Received ${events.length} events from the nested function`);
+  return events;
+}
