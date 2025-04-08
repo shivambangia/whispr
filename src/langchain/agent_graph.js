@@ -70,15 +70,14 @@ export async function runWithTranscript(initialTranscript) {
   const initialState = {
   messages: [
     { role: "system", content: "You are a helpful assistant." },
-    { role: "user", content: {initialTranscript} }
+    { role: "user", content: initialTranscript}
   ],
 };
 
   // Stream events from the workflow.
   const eventStream = app3.streamEvents(
     initialState,
-    { version: "v2" }, 
-    { includeNames: ["nested"] }
+    { version: "v2" }
   );
 
   const events = [];
