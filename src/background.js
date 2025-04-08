@@ -1,4 +1,4 @@
-import {runWithTranscript} from "./langchain/agent_graph"; 
+import {runWithTranscript} from "./langchain/agent_graph.js"; 
 
 console.log("Background service worker started.");
 
@@ -6,11 +6,11 @@ const invokeGraph = async (transcript) => {
       console.log("Background: Invoking LangGraph agent...");
   
       try{
-        const finalState = await runWithTranscript(transcript);
-        console.log(finalState)
+        const result = await runWithTranscript("bookmark this page");
+        console.log(result)
       }
       catch(error){
-        console.log("it's an error folks")
+        console.log(error)
       }
   
   };
