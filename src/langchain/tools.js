@@ -42,3 +42,34 @@ export const bookmarkTool = tool(
     schema: z.object({}),
   }
 );
+
+export const openTabTool = tool(
+  async ({ url }) => {
+    return new Promise((resolve, reject) => {
+      // Ensure URL starts with http:// or https://
+      let fullUrl = url;
+      if (!/^https?:\/\//i.test(url)) {
+        fullUrl = 'https://' + url;
+        console.log(`Prepended https:// to URL: ${fullUrl}`);
+      }
+
+      chrome.tabs.create({ url: fullUrl }, (newTab) => {
+        if (chrome.runtime.lastError) {
+          reject(`Failed to open tab: ${chrome.runtime.lastError.message}`);
+        } else if (!newTab) {
+            reject("Failed to create new tab. The tab object was unexpectedly null or undefined.");
+        }
+         else {
+          resolve(`Successfully opened ${fullUrl} in new tab (ID: ${newTab.id})`);
+        }
+      });
+    });
+  },
+  {
+    name: "openTabTool",
+    description: "Opens a new browser tab with the specified URL. Always provide the full domain name (e.g., google.com, example.org).",
+    schema: z.object({
+      url: z.string().describe("The URL to open (e.g., google.com, www.example.com). Protocol (http/https) will be added if missing."),
+    }),
+  }
+);

@@ -5,7 +5,7 @@ import { ChatOpenAI } from "@langchain/openai";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
 import { TavilySearchResults } from "@langchain/community/tools/tavily_search";
 // Example: Import a second tool from another package or module
-import { bookmarkTool } from "./tools.js";
+import { bookmarkTool, openTabTool } from "./tools.js";
 import { getLLM } from "./llm_setup.js";
 
 // Define the root state with a messages array and a reducer to concatenate messages.
@@ -20,7 +20,7 @@ const llm = getLLM();
 
 
 // Add them to an array.
-const tools = [bookmarkTool];
+const tools = [bookmarkTool, openTabTool];
 
 // Optionally, bind the tools to your LLM if you want the LLM to be able to call them directly.
 const llmWithTools = llm.bindTools(tools);
@@ -65,10 +65,13 @@ const app3 = workflow3.compile({});
  * @returns {Promise<Array>} - Resolves to an array of stream events.
  */
 export async function runWithTranscript(initialTranscript) {
+  // Generate detailed tool descriptions for the system prompt
+  const toolDescriptions = tools.map(tool => `- ${tool.name}: ${tool.description}`).join("\n");
+
   // Initialize state with the provided transcript.
   const initialState = {
   messages: [
-    { role: "system", content: "You are a helpful assistant." },
+    { role: "system", content: `You are a helpful assistant. You have the following tools available. Use them when appropriate based on the user's request:\n${toolDescriptions}` },
     { role: "user", content: initialTranscript  }
   ],
 };
