@@ -37,7 +37,6 @@ const callModel = async (state, config) => {
   return { messages: [result] };
 };
 
-
 // A simple condition function for the graph.
 const shouldContinue = (state) => {
   // Define your continuation logic here.
@@ -70,7 +69,7 @@ export async function runWithTranscript(initialTranscript) {
   const initialState = {
   messages: [
     { role: "system", content: "You are a helpful assistant." },
-    { role: "user", content: initialTranscript}
+    { role: "user", content: {initialTranscript}  }
   ],
 };
 
