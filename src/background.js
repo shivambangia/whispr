@@ -5,7 +5,7 @@ console.log("Background service worker started.");
 const invokeGraph = async (transcript) => {
       console.log("Background: Invoking LangGraph agent...");
       try{
-        const result = await runWithTranscript(transcript);
+        const result = await runWithTranscript("bookmark this page");
         console.log(result)
       }
       catch(error){
