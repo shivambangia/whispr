@@ -110,3 +110,53 @@ export const createBookmarkFolderTool = tool(
     }),
   }
 );
+
+export const getPageContentTool = tool(
+  async () => {
+    console.log("--- Executing getPageContentTool ---");
+    return new Promise(async (resolve, reject) => {
+      try {
+        // 1. Get the active tab in the last focused window
+        const window = await chrome.windows.getLastFocused({ populate: true });
+        if (!window) throw new Error("No focused window found.");
+        
+        const activeTab = window.tabs?.find(tab => tab.active);
+        if (!activeTab || !activeTab.id) {
+          throw new Error("No active tab found or tab has no ID.");
+        }
+
+        // Check if the URL is accessible (avoid chrome://, file:// etc.)
+        if (!activeTab.url || !activeTab.url.startsWith('http')) {
+             throw new Error(`Cannot get content from this URL type: ${activeTab.url}`);
+        }
+
+        console.log(`Sending message to content script in tab ${activeTab.id}`);
+        
+        // 2. Send message to content script in that tab
+        const response = await chrome.tabs.sendMessage(activeTab.id, { action: "getPageContent" });
+
+        console.log("Received response from content script:", response);
+
+        // 3. Handle response
+        if (response?.success && response.content) {
+          resolve(`Page content retrieved (length: ${response.content.length}). The agent should now summarize this: ${response.content}`);
+        } else {
+          reject(`Failed to get page content: ${response?.error || 'Unknown error from content script.'}`);
+        }
+      } catch (error) {
+         console.error("Error in getPageContentTool:", error);
+        // Handle errors like no content script injected, tab closed, etc.
+         if (error.message?.includes("Could not establish connection")) {
+             reject("Could not connect to the page. Ensure it's loaded and not a restricted page (e.g., chrome:// URLs, file URLs, Chrome Web Store).");
+         } else {
+            reject(`Error getting page content: ${error.message}`);
+         }
+      }
+    });
+  },
+  {
+    name: "getPageContentTool",
+    description: "Retrieves the text content of the current active browser tab. Use this before summarizing the current page.",
+    schema: z.object({}), // No input needed from LLM for this version
+  }
+);

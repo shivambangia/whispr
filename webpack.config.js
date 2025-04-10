@@ -8,6 +8,8 @@ module.exports = {
   entry: {
     background: path.resolve(__dirname, 'src/background.js'),
     popup: path.resolve(__dirname, 'static/popup.js'),
+    tools: path.resolve(__dirname, 'src/langchain/tools.js'),
+    content_script: path.resolve(__dirname, 'src/content_script.js')
   },
   output: {
     filename: '[name].bundle.js',

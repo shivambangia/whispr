@@ -5,7 +5,7 @@ import { ChatOpenAI } from "@langchain/openai";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
 import { TavilySearchResults } from "@langchain/community/tools/tavily_search";
 // Example: Import a second tool from another package or module
-import { bookmarkTool, openTabTool, createBookmarkFolderTool } from "./tools.js";
+import { bookmarkTool, openTabTool, createBookmarkFolderTool, getPageContentTool } from "./tools.js";
 import { getLLM } from "./llm_setup.js";
 
 // Define the root state with a messages array and a reducer to concatenate messages.
@@ -20,7 +20,7 @@ const llm = getLLM();
 
 
 // Add them to an array.
-const tools = [bookmarkTool, openTabTool, createBookmarkFolderTool];
+const tools = [bookmarkTool, openTabTool, createBookmarkFolderTool, getPageContentTool];
 
 // Optionally, bind the tools to your LLM if you want the LLM to be able to call them directly.
 const llmWithTools = llm.bindTools(tools);

@@ -2,130 +2,118 @@
 window.onload = () => {
     console.log("Popup script loaded.");
 
-    const btn = document.getElementById('startBtn');
-    const output = document.getElementById('output');
-    const statusDiv = document.getElementById('status'); // Get status element
+    // Get reference to chat log area
+    const chatLog = document.getElementById('chat-log');
+
+    // Helper function to add a message to the chat log and scroll down
+    const addMessageToLog = (text, type) => {
+        const messageElement = document.createElement('p');
+        messageElement.textContent = text;
+        // Apply class based on type ('user', 'assistant', 'status')
+        messageElement.classList.add(`${type}-message`); 
+        chatLog.appendChild(messageElement);
+        // Scroll to the bottom
+        chatLog.scrollTop = chatLog.scrollHeight; 
+    };
 
     // Basic check for browser compatibility
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-        statusDiv.textContent = "Speech Recognition API not supported in this browser.";
+        addMessageToLog("Speech Recognition not supported.", 'status');
         console.error("SpeechRecognition not supported");
-        btn.disabled = true;
-        return; // Stop execution if not supported
+        return; 
     }
 
+    // --- Recognition Setup ---
     const recognition = new SpeechRecognition();
-    recognition.continuous = false; // Process speech after user stops talking
-    recognition.interimResults = false; // Only final results
-    recognition.lang = 'en-US'; // Set language
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
 
-    let isRecording = false;
+    let recognitionActive = false; 
 
-    btn.onclick = () => {
-        if (isRecording) {
-            recognition.stop(); // Stop recognition if already recording
-            // UI update handled in onend
-        } else {
-            console.log("Starting recognition...");
-            output.value = ""; // Clear previous transcript
-            statusDiv.textContent = "Listening...";
-            btn.textContent = "Stop Recording";
-            btn.disabled = true; // Disable button briefly to prevent immediate stop
-            try {
-                recognition.start();
-                isRecording = true;
-                // Re-enable after a short delay allows start() to initiate
-                setTimeout(() => { btn.disabled = false; }, 500);
-            } catch (err) {
-                console.error("Error calling recognition.start():", err);
-                statusDiv.textContent = "Error starting recording: " + err.message;
-                btn.textContent = "Start Recording";
-                btn.disabled = false;
-                isRecording = false;
-            }
-        }
+    // --- Event Handlers ---
+    recognition.onstart = () => {
+        console.log("Recognition started.");
+        recognitionActive = true;
+        addMessageToLog("Listening...", 'status');
     };
 
     recognition.onresult = (event) => {
         const transcript = event.results[0][0].transcript;
         console.log("Transcript received:", transcript);
-        output.value = transcript; // Show transcript in textarea
-        statusDiv.textContent = "Processing request..."; // Update status
-        btn.disabled = true; // Disable button while processing
+        recognitionActive = false; // Recognition ended with a result
+        
+        // Add User message to log
+        addMessageToLog(transcript, 'user'); 
+        addMessageToLog("Processing request...", 'status');
 
-        // Send the transcript to the background script for processing
+        // Send the transcript to the background script
         chrome.runtime.sendMessage(
             { type: "PROCESS_TRANSCRIPT", payload: transcript },
             (response) => {
+                let statusMessage = "Error: Unknown issue.";
                 if (chrome.runtime.lastError) {
-                    // Handle errors like the background script not being ready
                     console.error("Error sending message:", chrome.runtime.lastError.message);
-                    statusDiv.textContent = "Error: Could not contact background script.";
-                    // Consider re-enabling the button here or providing specific feedback
+                    statusMessage = "Error: Could not contact background script.";
+                    addMessageToLog(statusMessage, 'status'); // Add error to log
                 } else if (response) {
                     console.log("Received response from background:", response);
-                    statusDiv.textContent = response.message || "Processing complete."; // Update status with response
+                    // Use the response message from background script as assistant/status message
+                    statusMessage = response.message || (response.success ? "Processing complete." : "An unknown error occurred.");
+                    // Display as assistant message if successful and meaningful, otherwise status
+                    const messageType = response.success && response.message && response.message !== "Processing complete." ? 'assistant' : 'status';
+                     addMessageToLog(statusMessage, messageType);
                 } else {
-                    // Handle cases where the background script didn't send a response
-                    // This might be normal depending on your background script's logic
-                    console.log("Background script did not send a response.");
-                     statusDiv.textContent = "Request sent, no confirmation received.";
+                    console.log("Background script did not send a valid response.");
+                    statusMessage = "Request sent, but no confirmation received.";
+                    addMessageToLog(statusMessage, 'status');
                 }
-                 // Re-enable the button once processing (or sending) is done/failed
-                btn.disabled = false;
-                btn.textContent = "Start Recording"; // Reset button text
             }
         );
     };
 
     recognition.onerror = (event) => {
         console.error("Speech recognition error:", event.error, event.message);
-        let errorMessage = 'Speech recognition error: ' + event.error;
+        recognitionActive = false;
+        let errorMessage = 'Error: ' + event.error;
         if (event.error === 'no-speech') {
-            errorMessage = "No speech detected. Please try again.";
+            errorMessage = "No speech detected. Please speak clearly.";
         } else if (event.error === 'audio-capture') {
-            errorMessage = "Audio capture error. Ensure microphone is enabled.";
+            errorMessage = "Audio capture error. Check microphone.";
         } else if (event.error === 'not-allowed') {
-            errorMessage = "Microphone access denied. Please allow access.";
+            errorMessage = "Microphone access denied.";
         }
-        statusDiv.textContent = errorMessage;
-        isRecording = false; // Ensure state is reset
-        btn.textContent = "Start Recording";
-        btn.disabled = false;
+        addMessageToLog(errorMessage, 'status');
     };
 
     recognition.onend = () => {
         console.log("Recognition ended.");
-        isRecording = false;
-        // Don't reset button text/state here if onresult is expected
-        // If recognition ends without a result (e.g., timeout, manual stop without speech), reset UI
-        if (output.value === "") { // Check if a result was processed
-            btn.textContent = "Start Recording";
-            btn.disabled = false;
-            if(statusDiv.textContent === "Listening...") { // Avoid overwriting error messages
-               statusDiv.textContent = "Click the button to start recording";
-            }
+        // If recognition ended without a result (e.g. timeout, no speech)
+        if (recognitionActive) {
+            recognitionActive = false;
+             addMessageToLog("Recognition stopped or timed out.", 'status');
         }
-         // If it ends *after* processing, the onresult callback handles UI updates
     };
 
-    // Optional: Listen for status updates from the background script
+    // --- Start Recognition Immediately ---
+    try {
+        console.log("Attempting to start recognition immediately...");
+        addMessageToLog("Initializing microphone...", 'status');
+        recognition.start();
+    } catch (err) {
+        console.error("Error starting recognition immediately:", err);
+         addMessageToLog("Could not start microphone: " + err.message, 'status');
+    }
+
+    // Optional: Listener for status updates 
+    // (Could potentially add these as status messages too)
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         if (request.type === "STATUS_UPDATE") {
             console.log("Received status update:", request.payload);
-            statusDiv.textContent = request.payload;
-            // You could also re-enable/disable the button based on status if needed
-            // if(request.payload === "Task Complete" || request.payload.startsWith("Error:")) {
-            //      btn.disabled = false;
-            //      btn.textContent = "Start Recording";
-            // }
+            addMessageToLog(`Update: ${request.payload}`, 'status');
         }
-        // Keep the message channel open for asynchronous responses if needed
-        // return true;
+        // return true; 
     });
-
-    // Initial status
-    statusDiv.textContent = "Click the button to start recording";
 
 }; // End window.onload

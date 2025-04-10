@@ -2,24 +2,26 @@ import {runWithTranscript} from "./langchain/agent_graph.js";
 
 console.log("Background service worker started.");
 
-const invokeGraph = async (transcript) => {
-      console.log("Background: Invoking LangGraph agent...");
+const invokeGraph = async (transcript, sendResponse) => {
+      console.log("Background: Invoking LangGraph agent with transcript:", transcript);
       try{
-        const result = await runWithTranscript(transcript);
-        console.log(result)
+        const events = await runWithTranscript(transcript);
+        console.log("Background: LangGraph finished successfully.");
+        sendResponse({ success: true, message: "Processing complete." });
       }
       catch(error){
-        console.log(error)
+        console.error("Background: Error invoking LangGraph:", error);
+        sendResponse({ success: false, message: `Error: ${error.message || 'Unknown error'}` });
       }
   };
 
-chrome.runtime.onMessage.addListener((message, sender) => {
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === "PROCESS_TRANSCRIPT") {
         const transcript = message.payload;
         console.log("Background: Received transcript:", transcript);
-        invokeGraph(transcript)
-        // Return true to indicate that sendResponse will be called asynchronously
+        invokeGraph(transcript, sendResponse);
         return true;
     }
+    return false;
 });
 
