@@ -8,9 +8,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       // Basic extraction - might need refinement for complex pages
       // Consider libraries like Readability.js for more robust extraction later
       const mainContent = document.body.innerText; 
+      console.log("Main content:", mainContent);
       if (mainContent && mainContent.trim().length > 0) {
          // Limit content length to avoid overwhelming the LLM context
-         const MAX_LENGTH = 10000; // Adjust as needed (approx chars)
+         const MAX_LENGTH = 100000; // Adjust as needed (approx chars)
          const truncatedContent = mainContent.length > MAX_LENGTH 
             ? mainContent.substring(0, MAX_LENGTH) + "... (truncated)" 
             : mainContent;

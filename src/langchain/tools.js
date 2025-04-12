@@ -130,7 +130,7 @@ export const getPageContentTool = tool(
              throw new Error(`Cannot get content from this URL type: ${activeTab.url}`);
         }
 
-        console.log(`Sending message to content script in tab ${activeTab.id}`);
+        console.log(`Sending message to content script in tab ${activeTab.id} `);
         
         // 2. Send message to content script in that tab
         const response = await chrome.tabs.sendMessage(activeTab.id, { action: "getPageContent" });

@@ -1,4 +1,5 @@
 import {runWithTranscript} from "./langchain/agent_graph.js"; 
+import { contentScript } from "./content_script.js";
 
 console.log("Background service worker started.");
 
