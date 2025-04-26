@@ -51,7 +51,9 @@ module.exports = {
           from: path.resolve(__dirname, 'static'),
           to: path.resolve(__dirname, 'dist'),
           globOptions: {
-            ignore: ['popup.js']
+            // Make sure it doesn't ignore overlay.css
+            // If popup.js is no longer needed, you can remove it from ignore
+            ignore: ['popup.js'] // Keep ignoring popup.js if you haven't deleted it
           }
         }
       ]

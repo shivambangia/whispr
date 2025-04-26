@@ -1,12 +1,13 @@
 /* Optional: Use Google Font */
 body {
     font-family: 'Roboto', sans-serif; /* Apply Roboto font */
-    width: 300px; /* Increased width */
-    height: 150px; /* Reduced height to 20% of 300px */
+    width: 400px; /* Set desired width */
+    height: 500px; /* Set desired height */
     padding: 0; /* Remove padding to allow container to fill */
     margin: 0; /* Remove default margin */
     display: flex; /* Use flexbox for container */
-    overflow: hidden; /* Prevent body scrollbars */
+    overflow: auto; /* Allow scrollbars if content exceeds resized dimensions */
+    resize: both; /* Allow resizing horizontally and vertically */
     border-radius: 15px; /* Add rounded corners */
   }
   

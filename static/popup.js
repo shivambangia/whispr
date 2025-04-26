@@ -4,6 +4,8 @@ window.onload = () => {
 
     // Get reference to chat log area
     const chatLog = document.getElementById('chat-log');
+    // Optional: Add a button to reset chat
+    const resetButton = document.getElementById('reset-button'); // Assuming you add <button id="reset-button">Reset</button> in popup.html
 
     // Helper function to add a message to the chat log and scroll down
     const addMessageToLog = (text, type) => {
@@ -26,17 +28,20 @@ window.onload = () => {
 
     // --- Recognition Setup ---
     const recognition = new SpeechRecognition();
-    recognition.continuous = false;
+    recognition.continuous = false; // Keep false for turn-based interaction
     recognition.interimResults = false;
     recognition.lang = 'en-US';
 
-    let recognitionActive = false; 
+    let recognitionActive = false;
+    let userManuallyStopped = false; // Flag to prevent auto-restart if user stops it
 
     // --- Event Handlers ---
     recognition.onstart = () => {
         console.log("Recognition started.");
         recognitionActive = true;
+        userManuallyStopped = false; // Reset flag on start
         addMessageToLog("Listening...", 'status');
+        // Optional: Update button text/state if you add start/stop buttons
     };
 
     recognition.onresult = (event) => {
@@ -69,6 +74,20 @@ window.onload = () => {
                     statusMessage = "Request sent, but no confirmation received.";
                     addMessageToLog(statusMessage, 'status');
                 }
+
+                // --- Restart recognition after processing the response ---
+                if (!userManuallyStopped) {
+                    console.log("Restarting recognition after response.");
+                    try {
+                        recognition.start();
+                    } catch (err) {
+                        // Avoid error if recognition is already starting (rare edge case)
+                        if (err.name !== 'InvalidStateError') {
+                            console.error("Error restarting recognition:", err);
+                            addMessageToLog("Could not restart microphone.", 'status');
+                        }
+                    }
+                }
             }
         );
     };
@@ -77,23 +96,37 @@ window.onload = () => {
         console.error("Speech recognition error:", event.error, event.message);
         recognitionActive = false;
         let errorMessage = 'Error: ' + event.error;
-        if (event.error === 'no-speech') {
-            errorMessage = "No speech detected. Please speak clearly.";
-        } else if (event.error === 'audio-capture') {
-            errorMessage = "Audio capture error. Check microphone.";
-        } else if (event.error === 'not-allowed') {
-            errorMessage = "Microphone access denied.";
+        if (event.error !== 'no-speech') {
+            if (event.error === 'audio-capture') {
+                errorMessage = "Audio capture error. Check microphone.";
+            } else if (event.error === 'not-allowed') {
+                errorMessage = "Microphone access denied.";
+            }
+            addMessageToLog(errorMessage, 'status');
+        } else {
+             console.log("No speech detected, will restart silently.");
         }
-        addMessageToLog(errorMessage, 'status');
     };
 
     recognition.onend = () => {
         console.log("Recognition ended.");
-        // If recognition ended without a result (e.g. timeout, no speech)
-        if (recognitionActive) {
-            recognitionActive = false;
-             addMessageToLog("Recognition stopped or timed out.", 'status');
+        const wasActive = recognitionActive; // Store state before resetting
+        recognitionActive = false; // Reset flag
+
+        if (wasActive && !userManuallyStopped) {
+             console.log("Restarting recognition due to unexpected end (e.g., timeout/no-speech).");
+             try {
+                 recognition.start(); // Attempt to restart
+             } catch (err) {
+                 if (err.name !== 'InvalidStateError') {
+                     console.error("Error restarting recognition on end:", err);
+                     addMessageToLog("Could not restart microphone.", 'status');
+                 }
+             }
+        } else if (userManuallyStopped) {
+            addMessageToLog("Recognition stopped by user.", 'status');
         }
+        // Optional: Update button text/state if you add start/stop buttons
     };
 
     // --- Start Recognition Immediately ---
@@ -105,6 +138,38 @@ window.onload = () => {
         console.error("Error starting recognition immediately:", err);
          addMessageToLog("Could not start microphone: " + err.message, 'status');
     }
+
+    // --- Optional: Add Reset Button Listener ---
+    if (resetButton) {
+        resetButton.onclick = () => {
+            addMessageToLog("Resetting chat...", 'status');
+            chatLog.innerHTML = ''; // Clear the popup log
+            chrome.runtime.sendMessage({ type: "RESET_CHAT" }, (response) => {
+                if (response?.success) {
+                    addMessageToLog("Chat history cleared. Ready.", 'status');
+                } else {
+                    addMessageToLog("Failed to clear chat history.", 'status');
+                }
+                // Optionally restart recognition after reset
+                if (!recognitionActive && !userManuallyStopped) {
+                    try { recognition.start(); } catch(e) { console.error(e); }
+                }
+            });
+        };
+    }
+
+    // Optional: Add a way to manually stop recognition
+    // e.g., add a stop button:
+    // const stopButton = document.getElementById('stop-button');
+    // if (stopButton) {
+    //     stopButton.onclick = () => {
+    //         if (recognitionActive) {
+    //             console.log("Manually stopping recognition.");
+    //             userManuallyStopped = true; // Set flag to prevent auto-restart
+    //             recognition.stop();
+    //         }
+    //     };
+    // }
 
     // Optional: Listener for status updates 
     // (Could potentially add these as status messages too)

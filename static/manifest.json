@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Whispr",
-  "version": "1.0",
-  "description": "Uses speech recognition and LangChain to perform browser actions.",
+  "name": "Whispr Overlay",
+  "version": "1.1",
+  "description": "Uses speech recognition and LangChain to perform browser actions via an overlay.",
   "permissions": [
     "activeTab",
     "tabs",
@@ -16,7 +16,7 @@
       "128": "assets/icon128.png"
     },
   "action": {
-    "default_popup": "popup.html"
+    "default_title": "Toggle Whispr Overlay"
   },
   "background": {
     "service_worker": "background.bundle.js"
@@ -25,8 +25,14 @@
     {
       "matches": ["http://*/*", "https://*/*"],
       "js": ["content_script.bundle.js"],
-      "run_at": "document_idle",
-      "all_frames": true
+      "css": ["overlay.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [ "overlay.css" ],
+      "matches": [ "http://*/*", "https://*/*" ]
     }
   ]
 } 

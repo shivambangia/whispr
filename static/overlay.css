@@ -1,0 +1,98 @@
+/* Ensure this ID is unique to avoid conflicts */
+#whispr-overlay-container {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  z-index: 99999; /* High z-index to stay on top */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+#whispr-toggle-button {
+  background-color: #6e8efb; /* Example color */
+  color: white;
+  border: none;
+  border-radius: 50%; /* Make it circular */
+  width: 60px;
+  height: 60px;
+  font-size: 24px; /* Adjust icon size */
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-color 0.3s ease;
+}
+
+#whispr-toggle-button:hover {
+  background-color: #5a75e6; /* Darker shade on hover */
+}
+
+/* Basic styles for the chat panel (initially hidden) */
+#whispr-chat-panel {
+  width: 350px;
+  height: 450px;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  margin-bottom: 15px;
+  display: none; /* Initially hidden */
+  flex-direction: column;
+  overflow: hidden; /* Prevent content spill */
+  border: 1px solid #ccc;
+}
+
+#whispr-chat-panel.visible {
+    display: flex; /* Show when visible class is added */
+}
+
+
+/* Styles for chat log inside the panel (adapt from popup.css) */
+#whispr-chat-log {
+  flex-grow: 1;
+  padding: 10px;
+  overflow-y: auto;
+  background-color: #f9f9f9;
+  font-family: sans-serif; /* Example font */
+  font-size: 14px;
+}
+
+#whispr-chat-log p {
+  margin: 8px 0;
+  padding: 8px 12px;
+  border-radius: 15px;
+  line-height: 1.4;
+  word-wrap: break-word;
+  max-width: 85%; /* Prevent messages from taking full width */
+}
+
+#whispr-chat-log .user-message {
+  background-color: #d1eaff;
+  color: #333;
+  text-align: right;
+  margin-left: auto; /* Align to right */
+  border-bottom-right-radius: 5px;
+}
+
+#whispr-chat-log .assistant-message {
+  background-color: #e0e0e0;
+  color: #333;
+  text-align: left;
+  margin-right: auto; /* Align to left */
+  border-bottom-left-radius: 5px;
+}
+
+#whispr-chat-log .status-message {
+  background-color: #f0f0f0;
+  color: #666;
+  text-align: center;
+  font-style: italic;
+  font-size: 0.9em;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 95%;
+  border-radius: 5px;
+}
+
+/* Add styles for input area if needed later */ 

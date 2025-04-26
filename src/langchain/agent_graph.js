@@ -1,5 +1,5 @@
 import { END, START, StateGraph, Annotation } from "@langchain/langgraph/web";
-import { HumanMessage } from "@langchain/core/messages";
+import { HumanMessage, AIMessage, SystemMessage } from "@langchain/core/messages";
 import { RunnableLambda } from "@langchain/core/runnables";
 import { ChatOpenAI } from "@langchain/openai";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
@@ -66,21 +66,34 @@ const workflow3 = new StateGraph(GraphState3)
 const app3 = workflow3.compile({});
 
 /**
- * Runs the langgraph workflow with an initial transcript.
- * @param {Array} initialTranscript - An array of messages forming the initial transcript.
- * @returns {Promise<Array>} - Resolves to an array of stream events.
+ * Runs the langgraph workflow with the current message history.
+ * @param {Array<HumanMessage | AIMessage | SystemMessage>} messageHistory - The current conversation history.
+ * @returns {Promise<string>} - Resolves to the content of the final assistant message.
  */
-export async function runWithTranscript(initialTranscript) {
-  // Generate detailed tool descriptions for the system prompt
+export async function runWithHistory(messageHistory) {
+  // Generate detailed tool descriptions for the system prompt (can be done once or kept here)
   const toolDescriptions = tools.map(tool => `- ${tool.name}: ${tool.description}`).join("\n");
 
-  // Initialize state with the provided transcript.
+  // Construct the initial state using the provided message history
+  // Ensure the history starts with a system message if needed, or add one if missing.
+  const systemPrompt = `You are a helpful assistant. You have the following tools available. Use them when appropriate based on the user's request:\n${toolDescriptions}`;
+
+  // Check if the history already contains a system message. If not, prepend one.
+  // Note: LangGraph might handle this, but being explicit can be safer.
+  let fullHistory = [...messageHistory]; // Copy the history
+  if (fullHistory.length === 0 || fullHistory[0]._getType() !== "system") {
+      fullHistory.unshift(new SystemMessage(systemPrompt));
+  } else {
+      // Optionally update the existing system message if tool descriptions change dynamically
+      // fullHistory[0].content = systemPrompt;
+  }
+
+
   const initialState = {
-  messages: [
-    { role: "system", content: `You are a helpful assistant. You have the following tools available. Use them when appropriate based on the user's request:\n${toolDescriptions}` },
-    { role: "user", content: initialTranscript  }
-  ],
-};
+      messages: fullHistory, // Use the full history directly
+  };
+
+  console.log("Agent Graph: Running with initial state:", initialState);
 
   // Stream events from the workflow.
   const eventStream = app3.streamEvents(
@@ -88,12 +101,36 @@ export async function runWithTranscript(initialTranscript) {
     { version: "v2" }
   );
 
-  const events = [];
+  let finalMessageContent = "No response generated."; // Default message
+
   for await (const event of eventStream) {
-    console.log(event);
-    events.push(event);
+     console.log("Event:", event.event, "Data:", event.data); // Log event details
+     // Check if the event represents the final output of the 'agent' node
+     // The final output event has event type "on_chain_end" and name "agent"
+     // and its data contains the final state, where the last message is the assistant's response.
+     if (
+         event.event === 'on_chain_end' &&
+         event.name === 'agent' && // Check if it's the end of the agent node
+         event.data?.output?.messages &&
+         event.data.output.messages.length > 0
+     ) {
+         const lastMessage = event.data.output.messages[event.data.output.messages.length - 1];
+         // Check if the last message is from the assistant and has no tool calls
+         // Note: The check for `additional_kwargs.tool_calls` might depend on the exact LLM/Langchain version.
+         // AIMessage objects have a `tool_calls` property directly in newer versions.
+         // Let's check for the absence of tool_calls more robustly.
+         const hasToolCalls = lastMessage.tool_calls && lastMessage.tool_calls.length > 0;
+         if (lastMessage._getType() === "ai" && !hasToolCalls && lastMessage.content) {
+            finalMessageContent = lastMessage.content;
+             console.log("Found potential final message:", finalMessageContent);
+             // We assume the last message at the end of the 'agent' node is the final one
+             // If the graph logic changes, this might need adjustment.
+             // Don't break immediately, let the graph fully finish, just capture the last valid AI message.
+         }
+     }
   }
 
-  console.log(`Received ${events.length} events from the nested function`);
-  return events;
+  // After the stream is fully processed, return the captured final message.
+  console.log(`Returning final message content: ${finalMessageContent}`);
+  return finalMessageContent; // Return the content of the final message
 }
