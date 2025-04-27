@@ -40,7 +40,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         chatHistory.push(new HumanMessage(transcript));
 
         // Pass a copy of the current history to invokeGraph
-        invokeGraph([...chatHistory], sendResponse); // Pass a copy to avoid mutation issues if async takes time
+        invokeGraph([...chatHistory], sendResponse); // Pass a copy
+
+        return true; // Indicates asynchronous response
+    } else if (message.type === "PROCESS_TEXT_INPUT") { // Handle text input
+        const textInput = message.payload;
+        console.log("Background: Received text input:", textInput);
+
+        // Add the new user message to the history
+        chatHistory.push(new HumanMessage(textInput));
+
+        // Pass a copy of the current history to invokeGraph
+        invokeGraph([...chatHistory], sendResponse); // Pass a copy
 
         return true; // Indicates asynchronous response
     } else if (message.type === "RESET_CHAT") { // Add a way to reset history

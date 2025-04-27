@@ -95,4 +95,37 @@
   border-radius: 5px;
 }
 
-/* Add styles for input area if needed later */ 
+/* Add styles for input area if needed later */
+
+/* --- NEW STYLES for Input Area --- */
+#whispr-input-area {
+    display: flex;
+    padding: 10px;
+    border-top: 1px solid #ccc; /* Separator line */
+    background-color: #f0f0f0; /* Light background for input area */
+}
+
+#whispr-text-input {
+    flex-grow: 1; /* Take available space */
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 15px; /* Rounded corners */
+    margin-right: 8px;
+    font-size: 14px;
+}
+
+#whispr-send-button {
+    padding: 8px 15px;
+    border: none;
+    background-color: #6e8efb; /* Match toggle button color */
+    color: white;
+    border-radius: 15px; /* Rounded corners */
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s ease;
+}
+
+#whispr-send-button:hover {
+    background-color: #5a75e6; /* Darker shade on hover */
+}
+/* --- END NEW STYLES --- */ 

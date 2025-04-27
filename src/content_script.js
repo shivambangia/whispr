@@ -7,6 +7,8 @@ let userManuallyStopped = false;
 let chatLogElement = null; // Reference to the chat log div
 let chatPanelElement = null; // Reference to the chat panel
 let toggleButtonElement = null; // Reference to the toggle button
+let textInputElement = null; // Reference to the text input
+let sendButtonElement = null; // Reference to the send button
 
 // --- UI Injection ---
 
@@ -27,7 +29,23 @@ function injectOverlayUI() {
     chatLogElement = document.createElement('div');
     chatLogElement.id = 'whispr-chat-log';
     chatPanelElement.appendChild(chatLogElement);
-    // TODO: Add input area later if needed
+
+    // Create Input Area
+    const inputArea = document.createElement('div');
+    inputArea.id = 'whispr-input-area'; // Add an ID for styling
+
+    textInputElement = document.createElement('input');
+    textInputElement.type = 'text';
+    textInputElement.id = 'whispr-text-input';
+    textInputElement.placeholder = 'Type your message...';
+
+    sendButtonElement = document.createElement('button');
+    sendButtonElement.id = 'whispr-send-button';
+    sendButtonElement.textContent = 'Send';
+
+    inputArea.appendChild(textInputElement);
+    inputArea.appendChild(sendButtonElement);
+    chatPanelElement.appendChild(inputArea); // Add input area to the panel
 
     // Create Toggle Button
     toggleButtonElement = document.createElement('button');
@@ -44,6 +62,12 @@ function injectOverlayUI() {
 
     // --- Event Listeners ---
     toggleButtonElement.onclick = toggleChatPanelAndRecognition;
+    sendButtonElement.onclick = handleTextInput; // Add listener for send button
+    textInputElement.addEventListener('keypress', (event) => { // Add listener for Enter key
+        if (event.key === 'Enter') {
+            handleTextInput();
+        }
+    });
 
     console.log("Whispr overlay UI injected.");
 
@@ -183,6 +207,28 @@ function stopRecognition(manual = false) {
 }
 
 // --- Communication & UI Update ---
+
+function handleTextInput() {
+    if (!textInputElement || !textInputElement.value.trim()) {
+        return; // Do nothing if input is empty
+    }
+
+    const text = textInputElement.value.trim();
+    console.log("Content Script: Sending text input:", text);
+
+    addMessageToLog(text, 'user');
+    addMessageToLog("Processing...", 'status');
+
+    // Send to background script
+    chrome.runtime.sendMessage(
+        { type: "PROCESS_TEXT_INPUT", payload: text }, // Use a new message type
+        (response) => {
+            handleBackgroundResponse(response);
+        }
+    );
+
+    textInputElement.value = ''; // Clear the input field
+}
 
 function handleBackgroundResponse(response) {
     let statusMessage = "Error processing request.";
