@@ -17,19 +17,29 @@ module.exports = {
   },
   resolve: {
     fallback: {
-      "process/browser": require.resolve("process/browser")
+      "process/browser": require.resolve("process/browser"),
+      "path": require.resolve("path-browserify"),
+      "crypto": require.resolve("crypto-browserify"),
+      "stream": require.resolve("stream-browserify"),
+      "http": require.resolve("stream-http"),
+      "https": require.resolve("https-browserify"),
+      "url": require.resolve("url/"),
+      "util": require.resolve("util/"),
+      "zlib": require.resolve("browserify-zlib"),
+      "assert": require.resolve("assert/"),
+      "async_hooks": path.resolve(__dirname, 'empty.js')
     },
     alias: {
-      // Also alias non-prefixed "async_hooks" to our polyfill
       "async_hooks": path.resolve(__dirname, 'empty.js')
-    }
+    },
+    extensions: ['.js', '.mjs'],
   },
   target: "webworker",
   module: {
     rules: [
       {
-        test: /\.mjs$/,
-        include: /node_modules/,
+        test: /\.m?js$/,
+        exclude: /node_modules/,
         type: 'javascript/auto',
         resolve: {
           fullySpecified: false,
@@ -38,12 +48,12 @@ module.exports = {
     ]
   },
   plugins: [
-    // Replace any import of "node:async_hooks" with our polyfill from empty.js
     new webpack.NormalModuleReplacementPlugin(/^node:async_hooks$/, resource => {
       resource.request = path.resolve(__dirname, 'empty.js');
     }),
     new webpack.ProvidePlugin({
-      process: 'process/browser'
+      process: 'process/browser',
+      Buffer: ['buffer', 'Buffer'],
     }),
     new CopyWebpackPlugin({
       patterns: [
@@ -51,12 +61,13 @@ module.exports = {
           from: path.resolve(__dirname, 'static'),
           to: path.resolve(__dirname, 'dist'),
           globOptions: {
-            // Make sure it doesn't ignore overlay.css
-            // If popup.js is no longer needed, you can remove it from ignore
-            ignore: ['popup.js'] // Keep ignoring popup.js if you haven't deleted it
+            ignore: ['**/popup.js']
           }
         }
       ]
     })
-  ]
+  ],
+  experiments: {
+    topLevelAwait: true
+  }
 };
