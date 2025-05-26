@@ -1,28 +1,28 @@
 # Speech to Text Chrome Extension
 
-A Chrome extension that converts your speech to text using the Web Speech API.
+A Chrome extension that converts your speech to text and let's you chat with the website
 
 ## Features
 
 - Real-time speech recognition
 - Continuous recording capability
-- Clean, modern interface
-- Visual feedback for recording status
+- Helps you chat with the website
+- Open Tabs
+- create bookmarks
 - Support for multiple languages (based on your browser settings)
 
 ## How to Use
-
-1. Click the extension icon in your Chrome toolbar
-2. Click the "Start Recording" button
-3. Speak into your microphone
-4. Your speech will be converted to text in real-time
-5. Click "Stop Recording" when you're done
+1. Update YOUR_API_KEY from openAI key in llm_setup folder
+   a) How to get your API Key ? https://platform.openai.com/api-keys 
+3. run npm i to install packages
+4. run npm run build to build the packages 
+5. Dist folder should appear
 
 ## How to Load the Extension
 
 1. Open Chrome and go to `chrome://extensions/`
 2. Enable "Developer mode" in the top right corner
-3. Click "Load unpacked" and select the directory containing these files
+3. Click "Load unpacked" and select the "Dist" folder
 4. The extension icon should appear in your Chrome toolbar
 
 ## Requirements
